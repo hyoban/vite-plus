@@ -1,49 +1,56 @@
-> vite run script1 # simple task
-$ echo 'hello vite'
-hello vite
+> vite run hello
+$ vite lint ./src
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with <variable> rules using <variable> threads.
+
+
+$ vite lint
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 2 files with <variable> rules using <variable> threads.
+
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Vite+ Task Runner • Execution Summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Statistics:  1 tasks • 0 cache hits • 1 cache misses 
+Statistics:  2 tasks • 0 cache hits • 2 cache misses 
 Performance:  0% cache hit rate
 
 Task Details:
 ────────────────────────────────────────────────
-  [1] script1 ✓
+  [1] root-package#hello(subcommand 0) ✓
+      → Cache miss: no previous cache entry found
+  ·······················································
+  [2] root-package#hello ✓
       → Cache miss: no previous cache entry found
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-> vite run script2 # nested task should work
-$ echo 'hello vite' (✓ cache hit, replaying)
-hello vite
+> echo 'console.log(123)' > a.ts
+> vite run hello # report cache status from the inner runner
+$ vite lint ./src (✓ cache hit, replaying)
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with <variable> rules using <variable> threads.
 
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    Vite+ Task Runner • Execution Summary
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$ vite lint (✗ cache miss: content of input 'a.ts' changed, executing)
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 2 files with <variable> rules using <variable> threads.
 
-Statistics:  1 tasks • 1 cache hits • 0 cache misses 
-Performance:  100% cache hit rate
-
-Task Details:
-────────────────────────────────────────────────
-  [1] script1 ✓
-      → Cache hit - output replayed
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Vite+ Task Runner • Execution Summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Statistics:  1 tasks • 0 cache hits • 1 cache misses 
+Statistics:  2 tasks • 0 cache hits • 2 cache misses 
 Performance:  0% cache hit rate
 
 Task Details:
 ────────────────────────────────────────────────
-  [1] script2 ✓
+  [1] root-package#hello(subcommand 0) ✓
+      → Cache miss: no previous cache entry found
+  ·······················································
+  [2] root-package#hello ✓
       → Cache miss: no previous cache entry found
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
