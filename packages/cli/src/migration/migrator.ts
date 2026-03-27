@@ -680,7 +680,7 @@ export function rewriteStandaloneProject(
         ...pkg.resolutions,
         ...VITE_PLUS_OVERRIDE_PACKAGES,
       };
-    } else if (packageManager === PackageManager.npm) {
+    } else if (packageManager === PackageManager.npm || packageManager === PackageManager.bun) {
       pkg.overrides = {
         ...pkg.overrides,
         ...VITE_PLUS_OVERRIDE_PACKAGES,
@@ -749,6 +749,8 @@ export function rewriteMonorepo(
     rewritePnpmWorkspaceYaml(workspaceInfo.rootDir);
   } else if (workspaceInfo.packageManager === PackageManager.yarn) {
     rewriteYarnrcYml(workspaceInfo.rootDir);
+  } else if (workspaceInfo.packageManager === PackageManager.bun) {
+    rewriteBunCatalog(workspaceInfo.rootDir);
   }
   rewriteRootWorkspacePackageJson(
     workspaceInfo.rootDir,
@@ -951,6 +953,52 @@ function rewriteCatalog(doc: YamlDocument): void {
 }
 
 /**
+ * Write catalog entries to root package.json for bun.
+ * Bun stores catalogs in package.json under the `catalog` key,
+ * unlike pnpm which uses pnpm-workspace.yaml.
+ * @see https://bun.sh/docs/pm/catalogs
+ */
+function rewriteBunCatalog(projectPath: string): void {
+  const packageJsonPath = path.join(projectPath, 'package.json');
+  if (!fs.existsSync(packageJsonPath)) {
+    return;
+  }
+
+  editJsonFile<{
+    catalog?: Record<string, string>;
+    overrides?: Record<string, string>;
+  }>(packageJsonPath, (pkg) => {
+    const catalog: Record<string, string> = { ...pkg.catalog };
+
+    // Add vite-plus managed packages to catalog
+    for (const [key, value] of Object.entries(VITE_PLUS_OVERRIDE_PACKAGES)) {
+      if (!value.startsWith('file:')) {
+        catalog[key] = value;
+      }
+    }
+    if (!VITE_PLUS_VERSION.startsWith('file:')) {
+      catalog[VITE_PLUS_NAME] = VITE_PLUS_VERSION;
+    }
+
+    // Remove replaced packages from catalog
+    for (const name of REMOVE_PACKAGES) {
+      delete catalog[name];
+    }
+
+    pkg.catalog = catalog;
+
+    // bun overrides support catalog: references
+    const overrides: Record<string, string> = { ...pkg.overrides };
+    for (const key of Object.keys(VITE_PLUS_OVERRIDE_PACKAGES)) {
+      overrides[key] = 'catalog:';
+    }
+    pkg.overrides = overrides;
+
+    return pkg;
+  });
+}
+
+/**
  * Rewrite root workspace package.json to add vite-plus dependencies
  * @param projectPath - The path to the project
  */
@@ -984,6 +1032,8 @@ function rewriteRootWorkspacePackageJson(
         ...pkg.overrides,
         ...VITE_PLUS_OVERRIDE_PACKAGES,
       };
+    } else if (packageManager === PackageManager.bun) {
+      // bun overrides are handled in rewriteBunCatalog() with catalog: references
     } else if (packageManager === PackageManager.pnpm) {
       if (isForceOverrideMode()) {
         // In force-override mode, keep overrides in package.json pnpm.overrides
